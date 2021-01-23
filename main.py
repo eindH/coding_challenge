@@ -64,6 +64,7 @@ async def listAllUsers():
 
 @app.get('/user-by-id/{user_id}')
 async def userById(user_id):
+    # SEARCHES MONGODB BY USERID
     user_details = userCol.find_one({"_id": ObjectId(str(user_id))})
     return {
         'first_name': user_details['first_name'],
@@ -73,6 +74,7 @@ async def userById(user_id):
 
 @app.post('/create-property')
 async def createProperty(propertyDoc: Property):
+    # INSERTS NEW PROPERTY DOCUMENT INTO MONGODB
     new_property = propertyCol.insert_one(
         {
             'address1': propertyDoc.address1,
@@ -89,6 +91,7 @@ async def createProperty(propertyDoc: Property):
 
 @app.get('/find-user-properties/{user_id}')
 async def findUserProperties(user_id):
+    # CREATES CURSOR AND ITERATES THRU ALL OWNER PROPERTIES
     cursor = propertyCol.find({'owner': user_id})
     property_dict = {}
     for doc in cursor:
@@ -105,6 +108,7 @@ async def findUserProperties(user_id):
 
 @app.post('/update-user/{user_id}')
 async def updateUser(user_id, updated_details: User):
+    # TAKES PREV DETAILS AND CHANGES IF UPDATED
     user = userCol.find_one({"_id": ObjectId(str(user_id))})
     update_first_name = user['first_name']
     update_last_name = user['last_name']
@@ -126,6 +130,7 @@ async def updateUser(user_id, updated_details: User):
 
 @app.post('/update-property/{property_id}')
 async def updateProperty(property_id, updated_details: Property):
+    # TAKES PREV DETAILS AND CHANGES IF UPDATED
     property_doc = propertyCol.find_one({"_id": ObjectId(str(property_id))})
     update_address1 = property_doc['address1']
     update_address2 = property_doc['address2']
@@ -160,6 +165,7 @@ async def updateProperty(property_id, updated_details: Property):
 
 @app.post('/update-property-owner/{property_id}')
 async def updatePropertyOwner(property_id, updated_details: Property):
+    # TAKES PREV OWNER AND CHANGES TO UPDATED
     property_doc = propertyCol.find_one({"_id": ObjectId(str(property_id))})
     update_owner = property_doc['owner']
     if updated_details.owner:
@@ -175,12 +181,14 @@ async def updatePropertyOwner(property_id, updated_details: Property):
 
 @app.post('/delete-property/{property_id}')
 async def deletePropertyCommand(property_id):
+    # DELETE PROPERTY BY ID
     propertyCol.find_one_and_delete({"_id": ObjectId(str(property_id))})
     return {"message": "PROPERTY DELETED"}
 
 
 @app.post('/delete-user/{user_id}')
 async def deleteUser(user_id):
+    # DELETE ALL OWNER PROPERTIES BEFORE DELETING OWNER
     propertyCol.delete_many({'owner': user_id})
     userCol.delete_one({"_id": ObjectId(str(user_id))})
     return {"message": "USER AND PROPERTIES DELETED"}
