@@ -1,6 +1,7 @@
 from typing import Optional
 from fastapi import FastAPI
 import pymongo
+from fastapi.testclient import TestClient
 from pydantic import BaseModel
 from bson.objectid import ObjectId
 
@@ -73,16 +74,16 @@ async def userById(user_id):
 
 
 @app.post('/create-property')
-async def createProperty(propertyDoc: Property):
+async def createProperty(property_doc: Property):
     # INSERTS NEW PROPERTY DOCUMENT INTO MONGODB
     new_property = propertyCol.insert_one(
         {
-            'address1': propertyDoc.address1,
-            'address2': propertyDoc.address2,
-            'city': propertyDoc.city,
-            'postcode': propertyDoc.postcode,
-            'value': propertyDoc.value,
-            'owner': propertyDoc.owner
+            'address1': property_doc.address1,
+            'address2': property_doc.address2,
+            'city': property_doc.city,
+            'postcode': property_doc.postcode,
+            'value': property_doc.value,
+            'owner': property_doc.owner
         })
     return {
         "message": "PROPERTY ADDED WITH ID#" + str(new_property.inserted_id)
@@ -192,3 +193,43 @@ async def deleteUser(user_id):
     propertyCol.delete_many({'owner': user_id})
     userCol.delete_one({"_id": ObjectId(str(user_id))})
     return {"message": "USER AND PROPERTIES DELETED"}
+
+client = TestClient(app)
+
+
+def test_read_main():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {
+        "message": "Welcome to the property management platform!"
+    }
+
+
+def test_find_user_properties():
+    response = client.get("/find-user-properties/600f04db5d3f93364db1d2e5")
+    assert response.status_code == 200
+    assert response.json() == {
+        "600f05d35d3f93364db1d2e7": {
+            "address1": "Palais de l'Elysee",
+            "address2": "55 Rue du Faubourg",
+            "city": "PARIS",
+            "postcode": "75008",
+            "value": 130000000,
+            "owner": "600f04db5d3f93364db1d2e5"
+        }, "600f06a75d3f93364db1d2e8": {
+            "address1": "Arc de Triomphe",
+            "address2": "Place Charles de Gaulle",
+            "city": "PARIS",
+            "postcode": "75008",
+            "value": 130000000,
+            "owner": "600f04db5d3f93364db1d2e5"
+        }
+    }
+
+
+def test_find_user_by_id():
+    response = client.get("/user-by-id/600f04db5d3f93364db1d2e5")
+    assert response.status_code == 200
+    assert response.json() == {
+        "first_name": "Napoleon", "last_name": "Bonaparte"
+    }
