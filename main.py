@@ -51,7 +51,7 @@ async def regUser(user: User):
 
 @app.get('/list-all-users')
 async def listAllUsers():
-    # GET CURSOR FOR COLLECTION AND LOOP THRU
+    # GET CURSOR FOR COLLECTION AND LOOP THRU. RETURN ALL USERS IN DATABASE
     cursor = userCol.find({})
     user_dict = {}
     for doc in cursor:
@@ -64,7 +64,7 @@ async def listAllUsers():
 
 @app.get('/user-by-id/{user_id}')
 async def userById(user_id):
-    # SEARCHES MONGODB BY USERID
+    # SEARCHES MONGODB BY USERID AND RETURNS USER DOCUMENT
     user_details = userCol.find_one({"_id": ObjectId(str(user_id))})
     return {
         'first_name': user_details['first_name'],
@@ -108,7 +108,7 @@ async def findUserProperties(user_id):
 
 @app.post('/update-user/{user_id}')
 async def updateUser(user_id, updated_details: User):
-    # TAKES PREV DETAILS AND CHANGES IF UPDATED
+    # TAKES PREV DETAILS AND CHANGES IF UPDATED, LEAVE THE SAME IF NOT
     user = userCol.find_one({"_id": ObjectId(str(user_id))})
     update_first_name = user['first_name']
     update_last_name = user['last_name']
